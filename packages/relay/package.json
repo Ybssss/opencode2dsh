@@ -1,0 +1,43 @@
+{
+  "name": "opencode2dsh-relay",
+  "version": "0.1.0",
+  "description": "Supervised Bun relay for the opencode2dsh free tier: starts with DSH, satisfies the TLS-handshake gate Node cannot pass, and rotates an exit pool on quota. No API key.",
+  "type": "module",
+  "main": "lib/index.mjs",
+  "exports": {
+    ".": "./lib/index.mjs",
+    "./relay": "./relay/relay.mjs",
+    "./pool": "./relay/pool.mjs",
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "lib",
+    "relay",
+    "cordis.patch.yml",
+    "README.md",
+    "LICENSE"
+  ],
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    }
+  },
+  "scripts": {
+    "relay": "bun relay/relay.mjs",
+    "pool": "bun relay/cli.mjs",
+    "test": "bun test/run-all.mjs"
+  },
+  "keywords": [
+    "dsh",
+    "dsh-plugin",
+    "deepseek-harness",
+    "opencode",
+    "opencode-zen",
+    "relay",
+    "proxy-pool"
+  ],
+  "license": "MIT",
+  "engines": {
+    "node": ">=20"
+  }
+}

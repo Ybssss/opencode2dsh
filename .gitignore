@@ -12,6 +12,11 @@ legacy/agent/.gotmp/
 # Logs / local state
 *.log
 
+# Relay: the exit pool holds proxy URLs, which carry credentials
+# (`socks5://user:pass@host:port`). It is user state, never repository content.
+packages/relay/relay/oc-pool.json
+oc-pool.json
+
 # Local drafts
 xiaohongshu-post.md
 *.tgz

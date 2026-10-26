@@ -17,6 +17,37 @@ English | [简体中文](README.zh-CN.md)
 
 ---
 
+> ## ⚠️ This fork: the free tier now gates on the TLS handshake
+>
+> Since **2026-10-25** every free-model request from a Node process is answered
+> with `429 FreeUsageLimitError` — not a quota, a *fingerprint*. Measured from one
+> IP with the same body and headers: Bun (BoringSSL) 200, Node `fetch` /
+> `node:https` / `node:http2` (OpenSSL) 429, `curl.exe` (Schannel) 429. Repeatable
+> and independent of the exit IP.
+>
+> DSH is a Node process, so upstream 0.3.14 cannot reach the lane at all. This
+> fork adds **[`packages/relay`](packages/relay)** — a Bun relay that starts and
+> stops with DSH, satisfies the handshake gate, reshapes the body into what the
+> gate also requires, and bridges tool calls back to DSH's own names. It also
+> carries an **exit pool** for the one gate a pool can help with (the daily
+> per-IP allowance).
+>
+> Install (from this fork):
+>
+> ```powershell
+> dsh plugin --profile desktop add github:Ybssss/opencode2dsh#master
+> .\scripts\point-plugin-at-relay.ps1     # the plugin has no base-URL setting
+> ```
+>
+> See [`packages/relay/README.md`](packages/relay/README.md) for config, the
+> pool CLI, and the measurements. Upstream discussion:
+> [#108](https://github.com/FishBottle7/opencode2dsh/issues/108),
+> [#109](https://github.com/FishBottle7/opencode2dsh/issues/109).
+>
+> The rest of this README describes upstream 0.3.14, unchanged.
+
+---
+
 opencode2dsh registers a native DSH `LlmAdapter` that streams directly from
 [OpenCode Zen](https://opencode.ai/zen)'s **anonymous free lane** — the same
 models OpenCode's own CLI uses without an account, served to your DSH model

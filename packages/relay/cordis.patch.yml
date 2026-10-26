@@ -1,0 +1,15 @@
+# opencode2dsh-relay — bundle patch.
+#
+# Inserts the host half, which supervises the Bun relay for the life of the DSH
+# process. The relay itself is a plain Bun script (`relay/relay.mjs`); this row
+# only starts and stops it.
+#
+# The relay port must match the base URL the opencode2dsh plugin talks to. That
+# plugin has no base-URL setting (`ZEN_BASE_URL` is a module constant), so it is
+# patched separately — see the README.
+- insert:
+    - id: opencode2dsh-relay
+      name: 'opencode2dsh-relay'
+      config:
+        port: 8899
+        autoStart: true

@@ -8,3 +8,23 @@
     - id: opencode2dsh
       name: '@opencode2dsh/dsh-plugin'
       config: {}
+#
+# Relay supervisor (this fork's addition, packages/relay).
+#
+# Since 2026-10-25 the opencode.ai free tier also gates on the TLS handshake:
+# a BoringSSL ClientHello (Bun) is accepted, OpenSSL (Node, i.e. DSH) is refused
+# with the same `FreeUsageLimitError` no matter what body is sent. So the plugin
+# cannot reach the lane from a Node process, and this row supervises a Bun relay
+# that can.
+#
+# It starts and stops with DSH. `port` must match the base URL the plugin talks
+# to — run `scripts/point-plugin-at-relay.ps1` once to redirect it, since
+# ZEN_BASE_URL is a module constant with no config surface.
+#
+# Remove this row to run without the relay (the plugin then behaves exactly as
+# upstream 0.3.14 does: 429 on every free model until upstream adapts).
+    - id: opencode2dsh-relay
+      name: opencode2dsh-relay
+      config:
+        port: 8899
+        autoStart: true
