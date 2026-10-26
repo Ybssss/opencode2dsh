@@ -21,10 +21,15 @@
 # to — run `scripts/point-plugin-at-relay.ps1` once to redirect it, since
 # ZEN_BASE_URL is a module constant with no config surface.
 #
+# `name` is this package's OWN root: its `main`/`exports` point at
+# packages/relay/lib/index.mjs. It has to be the root, because a bundle's rows are
+# resolved from the profile's node_modules — only the bundle itself is installed
+# there, so a nested `packages/relay` package is not reachable by name.
+#
 # Remove this row to run without the relay (the plugin then behaves exactly as
 # upstream 0.3.14 does: 429 on every free model until upstream adapts).
     - id: opencode2dsh-relay
-      name: opencode2dsh-relay
+      name: opencode2dsh
       config:
         port: 8899
         autoStart: true
