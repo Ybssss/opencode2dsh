@@ -65,12 +65,17 @@ check('exports a name', name === 'opencode2dsh-relay', name)
 check('exports apply', typeof apply === 'function', typeof apply)
 
 // 2. autoStart:false must register a disposer and start nothing.
+//
+// The port is deliberately NOT the default 8899: a standalone relay may
+// legitimately be running there, and asserting "nothing listens on 8899" would
+// then fail for a reason unrelated to this plugin.
 {
+  const PORT = 8971
   const { ctx, logs, disposeAll, disposerCount } = makeContext()
-  apply(ctx, { autoStart: false })
+  apply(ctx, { port: PORT, autoStart: false })
   check('apply: registers exactly one effect', disposerCount() === 1, `${disposerCount()}`)
   await new Promise(r => setTimeout(r, 300))
-  const health = await fetch('http://127.0.0.1:8899/healthz', { signal: AbortSignal.timeout(800) }).then(() => 'up').catch(() => 'down')
+  const health = await fetch(`http://127.0.0.1:${PORT}/healthz`, { signal: AbortSignal.timeout(800) }).then(() => 'up').catch(() => 'down')
   check('apply: autoStart false starts nothing', health === 'down', health)
   disposeAll()
 }
