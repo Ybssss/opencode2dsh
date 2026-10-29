@@ -155,6 +155,7 @@ export function reasoningEffortWire(id: string | undefined): string | undefined 
 }
 
 import { ANONYMOUS_KEY } from './credential.ts'
+import { isFreeLaneExhausted, laneCapResetLabel, noteLaneCapFromMessage } from '../pool/lane-cap.ts'
 
 /**
  * Retry policy the host (dsh-llm-retry) runs for this provider. Resolved
@@ -815,14 +816,26 @@ export class ZenAdapter {
       const failureMessage = (preContentFailure as { message: string }).message
       const failure = classifyStreamFailure(failureMessage)
       const deterministic = isRegionBlocked(failureMessage)
+      // The shared lane's daily allowance is credential-keyed, so a rotate
+      // would only repeat the same 429 from another IP. The adapter cannot see
+      // `Retry-After`, so record the daily reset (a pool probe that does see
+      // the header replaces it with the upstream's exact deadline).
+      const laneExhausted = failure === 'limited' && isFreeLaneExhausted(failureMessage)
+      if (laneExhausted) noteLaneCapFromMessage(failureMessage)
       // One pool-less replay on the sibling host when the lane refuses before any
       // content has reached the user; the pool delegate is otherwise the only thing
       // that can make this true.
-      const rotate = failure !== null
+      const rotate = !laneExhausted
+        && failure !== null
         && attempt < MAX_ROTATES
         && (shouldRotate(failure, options.model, ids.session, attempt + 1, deterministic)
           || (failure === 'refused' && attempt < 1))
       rotateStory.push(`#${attempt + 1} ${failure ?? 'unknown'}: ${failureMessage.slice(0, 80)}`)
+      // The surfaced error must name the one lever that actually helps, not
+      // just repeat the upstream's advertisement.
+      const laneHint = laneExhausted
+        ? ` (opencode2dsh: the shared anonymous free lane is exhausted; next reset ~${laneCapResetLabel()}. Set upstreamApiKey / OPENCODE_ZEN_API_KEY, run \`opencode auth login\`, or wait.)`
+        : ''
       if (!rotate) {
         // Persistent anonymous-lane refusal (issue #76): when the direct attempt
         // AND the sibling replay both 403'd with the FreeTierError credential
@@ -843,15 +856,15 @@ export class ZenAdapter {
         for (let i = 0; i < buffered.length; i += 1) {
           const e = buffered[i] as PiEvent & { error?: { errorMessage?: string }; message?: { errorMessage?: string; stopReason?: string } }
           if (e.type === 'error' && e.error) {
-            e.error.errorMessage = rotateStory.length > 1
+            e.error.errorMessage = (rotateStory.length > 1
               ? `${e.error.errorMessage} (opencode2dsh 轮换 ${rotateStory.length - 1} 次后放弃: ${rotateStory.join(' -> ')})`
-              : e.error.errorMessage
+              : e.error.errorMessage) + laneHint
             break
           }
           if (e.type === 'done' && e.message?.stopReason === 'error') {
-            e.message.errorMessage = rotateStory.length > 1
+            e.message.errorMessage = (rotateStory.length > 1
               ? `${e.message.errorMessage} (opencode2dsh 轮换 ${rotateStory.length - 1} 次后放弃: ${rotateStory.join(' -> ')})`
-              : e.message.errorMessage!
+              : e.message.errorMessage!) + laneHint
             break
           }
         }

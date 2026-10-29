@@ -32,7 +32,7 @@ export interface AdmissionDeps {
     /** Takes `proxyTls` for https:// candidates (see httpsProxyOptions); kept
      *  structurally loose so the existing test seam doubles still satisfy it. */
     ProxyAgent: new (options: { uri: string; clientFactory?: (origin: URL | string, options?: unknown) => unknown; proxyTls?: { rejectUnauthorized?: boolean } }) => Dispatcher
-    request(url: string, options: { dispatcher: Dispatcher; method?: string; headers?: Record<string, string>; body?: string }): Promise<{ statusCode: number; body: { text(): Promise<string> } }>
+    request(url: string, options: { dispatcher: Dispatcher; method?: string; headers?: Record<string, string>; body?: string }): Promise<{ statusCode: number; headers?: Record<string, string | string[] | undefined>; body: { text(): Promise<string> } }>
   }
   /** zen endpoint override for tests. */
   zenBaseUrl?: string

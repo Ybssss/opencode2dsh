@@ -121,7 +121,7 @@ export class BunTransport {
     if (this.#options.isPoolEnabled?.()) throw new Error('bunTransport requires ipPool.enabled=false; Bun cannot use the Node proxy dispatcher')
     const request = new Request(input, init)
     const destination = inferenceURL(request.url)
-    if (!destination || request.method !== 'POST' || !(request.headers.get('authorization') ?? '').startsWith('Bearer ')) {
+    if (!destination || request.method !== 'POST' || request.headers.get('authorization') !== 'Bearer public') {
       throw new Error('Bun transport accepts only anonymous OpenCode inference POSTs')
     }
     request.signal.throwIfAborted()

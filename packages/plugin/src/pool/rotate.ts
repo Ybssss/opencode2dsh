@@ -17,6 +17,7 @@
 
 import type { ExitPool } from './pool.ts'
 import { isStreamTruncation } from '../adapter/stream-truncation.ts'
+import { laneCapRemainingMs } from './lane-cap.ts'
 
 export type RotateFailure = 'transport' | 'limited' | 'refused'
 
@@ -144,6 +145,9 @@ export function createRotateDelegate(pool: ExitPool, options: { maxAttempts?: nu
   const maxAttempts = options.maxAttempts ?? 3
   return {
     decide(failure, model, session, attempt, deterministic = false) {
+      // A lane-wide cap is keyed to the credential, not the exit: rotating to
+      // another IP returns the same 429 and only burns the retry budget.
+      if (failure === 'limited' && laneCapRemainingMs() > 0) return false
       // The exit this turn was pinned to (the one that just failed).
       const failedExit = pool.exitOfSession(session)
       // Deterministic refusal (RegionError): ban the sticky exit's pairing

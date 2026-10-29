@@ -11,7 +11,7 @@ try {
   const url = new URL(input.url)
   if (url.origin !== 'https://opencode.ai' || url.username || url.password || url.search || url.hash || !paths.has(url.pathname)) throw new Error('Unsupported Bun transport destination')
   const headers = new Headers(input.headers)
-  if (!/^Bearer .+/u.test(headers.get('authorization') ?? '')) throw new Error('Bun transport requires a Bearer credential')
+  if (headers.get('authorization') !== 'Bearer public') throw new Error('Bun transport requires the anonymous public credential')
   for (const name of ['cookie', 'host', 'content-length', 'connection']) headers.delete(name)
   const response = await fetch(url, { method: 'POST', headers, body: input.body, redirect: 'error' })
   const outputHeaders = [...response.headers].filter(([name]) => !['set-cookie', 'content-length', 'content-encoding', 'transfer-encoding', 'connection'].includes(name))
