@@ -62,7 +62,7 @@ function revert() {
   copyFileSync(pkgBak, PKG)
   copyFileSync(patchBak, PATCH)
   console.log(`revert: restored ${pkgBak.replace(PROFILE, '.')} and ${patchBak.replace(PROFILE, '.')}`)
-  run(DSH, ['plugin', '--profile', 'desktop', 'install'], REPO)
+  run('cmd.exe', ['/c', DSH, 'plugin', '--profile', 'desktop', 'install'], REPO)
   status()
 }
 // --- part 3 ---
@@ -101,7 +101,7 @@ function wire() {
   }
 
   console.log(`wire: override ${KEY} -> file:${PLUGIN}`)
-  run(DSH, ['plugin', '--profile', 'desktop', 'install'], REPO)
+  run('cmd.exe', ['/c', DSH, 'plugin', '--profile', 'desktop', 'install'], REPO)
   status()
 }
 
