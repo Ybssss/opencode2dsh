@@ -19,6 +19,11 @@ export function markLaneCapUntil(timestamp: number): number {
   return capUntil
 }
 
+/** A chat that answers proves the lane is open: drop a stale deadline. */
+export function clearLaneCap(): void {
+  capUntil = 0
+}
+
 /** Next 00:00 UTC, the reset the free lane's daily allowance has used so far. */
 export function nextUtcMidnight(now = Date.now()): number {
   const date = new Date(now)

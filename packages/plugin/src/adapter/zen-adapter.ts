@@ -155,7 +155,7 @@ export function reasoningEffortWire(id: string | undefined): string | undefined 
 }
 
 import { ANONYMOUS_KEY } from './credential.ts'
-import { isFreeLaneExhausted, laneCapResetLabel, noteLaneCapFromMessage } from '../pool/lane-cap.ts'
+import { isFreeLaneExhausted, clearLaneCap, laneCapResetLabel, noteLaneCapFromMessage } from '../pool/lane-cap.ts'
 
 /**
  * Retry policy the host (dsh-llm-retry) runs for this provider. Resolved
@@ -802,6 +802,9 @@ export class ZenAdapter {
       // deadline timer is spent (pumpLive re-arms its own per pull)
       clearTimeout(deadlineTimer)
       if (preContentFailure === null && deliveredContent) {
+        // The lane answered: a deadline recorded from an older refusal is
+        // stale, so let the pool resume refilling immediately.
+        clearLaneCap()
         yield* toStreamChunks(pumpLive(), GATE_TOOL_ALIASES)
         return
       }
