@@ -71,6 +71,10 @@ export interface Opencode2dshConfig {
    * the cordis.patch.yml seam.
    */
   ipPool?: IpPoolConfig
+  /** Upstream Zen credential. Empty = the shared anonymous lane (`Bearer public`). */
+  upstreamApiKey?: string
+  /** Environment variable to read the upstream credential from. */
+  upstreamApiKeyEnv?: string
   /**
    * Local OpenCode delegation (docs/delegation.md, issue #76). Opt-in: when
    * `enabled` is true the plugin custodies the user's opencode credential and,
@@ -199,6 +203,8 @@ export const Config = Schema.object({
   providerId: Schema.string().default(defaults.providerId),
   /** Credential reference (env var name) holding the local agent token. */
   apiKeyEnv: Schema.string().default(defaults.apiKeyEnv),
+  upstreamApiKey: Schema.string().default(''),
+  upstreamApiKeyEnv: Schema.string().default('OPENCODE_ZEN_API_KEY'),
   /** Model list refresh interval in seconds. */
   refreshSeconds: Schema.number().step(1).min(1).default(defaults.refreshSeconds),
   /**

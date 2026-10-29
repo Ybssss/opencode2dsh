@@ -15,6 +15,7 @@ import { ExitPool, type ExitProtocol } from './pool.ts'
 import { Prober, type ProbeTask } from './prober.ts'
 import { SourceBreaker, dedupeAddresses, fetchSource, selectSources, type FetchResult, type FreeSource } from './sources.ts'
 import { admitCandidate, coarseScreenBatch, type AdmissionDeps } from './admission.ts'
+import { laneCapRemainingMs } from './lane-cap.ts'
 
 export interface RefillDeps extends AdmissionDeps {
   prober: Prober
@@ -129,6 +130,7 @@ export class RefillScheduler {
   /** One refill round; skipped while a previous round is still draining. */
   async tick(): Promise<void> {
     if (this.#running) return
+    if (laneCapRemainingMs() > 0) return
     this.#running = true
     try {
       await this.#round()

@@ -4,6 +4,7 @@ import { dirname, join } from 'node:path'
 import { deriveRequestIDs, disguiseHeaders, opencodeUserAgent } from './ids.ts'
 import { FREE_LANE_GATE_TOOL_NAMES, freeLaneGateTool } from './messages.ts'
 import { apiForModel } from './routing.ts'
+import { authorizationFor, currentUpstreamKey } from './credential.ts'
 
 /**
  * Port of agent/internal/catalog (opencode2api models.go + model_metadata.go,
@@ -733,7 +734,7 @@ export async function fetchZenModels(
   const response = await withTimeout(
     fetchImpl(`${zenBaseUrl.replace(/\/+$/, '')}/v1/models`, {
       headers: {
-        authorization: 'Bearer public',
+        authorization: authorizationFor(currentUpstreamKey()),
         'user-agent': userAgent,
         'x-opencode-client': 'cli',
         accept: 'application/json',

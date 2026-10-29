@@ -154,8 +154,7 @@ export function reasoningEffortWire(id: string | undefined): string | undefined 
   return (REASONING_EFFORT_LADDER as readonly string[]).includes(id) ? id : undefined
 }
 
-/** Anonymous credential: the literal upstream accepts for the free lane. */
-const ANONYMOUS_KEY = 'public'
+import { ANONYMOUS_KEY } from './credential.ts'
 
 /**
  * Retry policy the host (dsh-llm-retry) runs for this provider. Resolved
@@ -383,6 +382,7 @@ export class ZenAdapter {
   readonly #responsesProvider: StreamTransport | null
   readonly #firstEventMs: number
   readonly #bodyIdleMs: number
+  readonly #authKey: string
   readonly #responsesBodyIdleMs: number
   /** Sibling host for one replay of a refused attempt; null when there is none. */
   readonly #siblingBaseUrl: string | null
@@ -405,6 +405,8 @@ export class ZenAdapter {
     /** Local-opencode delegate for the persistent FreeTierError fallback. */
     delegate?: DelegationDelegate | null
     bunTransport?: BunTransportOptions
+    /** Upstream credential; defaults to the shared anonymous lane. */
+    authKey?: string
   } = {}) {
     this.#catalog = catalog
     this.#firstEventMs = options.firstEventMs ?? DEFAULT_FIRST_EVENT_MS
@@ -412,6 +414,7 @@ export class ZenAdapter {
     this.#responsesBodyIdleMs = options.responsesBodyIdleMs ?? RESPONSES_BODY_IDLE_MS
     this.#siblingBaseUrl = siblingZenBaseUrl(options.zenBaseUrl ?? ZEN_BASE_URL)
     this.#delegate = options.delegate ?? null
+    this.#authKey = options.authKey ?? ANONYMOUS_KEY
     if (options.providerOverride !== undefined) {
       this.#provider = options.providerOverride as never
       this.#responsesProvider = null
@@ -427,7 +430,7 @@ export class ZenAdapter {
     const auth = {
       apiKey: {
         name: 'OpenCode Zen anonymous lane',
-        resolve: async () => ({ auth: { apiKey: ANONYMOUS_KEY } }),
+        resolve: async () => ({ auth: { apiKey: this.#authKey } }),
       },
     }
     this.#provider = modelsTransport(createProvider<Api>({
@@ -914,7 +917,7 @@ export class ZenAdapter {
       ? this.#responsesProvider
       : this.#provider
     return transport.streamSimple(requestModel, context as unknown as Context, {
-      apiKey: ANONYMOUS_KEY,
+      apiKey: this.#authKey,
       sessionId: ids.session,
       headers: disguiseHeaders(ids),
       onPayload,

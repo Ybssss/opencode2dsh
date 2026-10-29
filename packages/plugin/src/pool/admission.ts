@@ -20,6 +20,8 @@ import type { Dispatcher } from 'undici'
 
 import { ZEN_BASE_URL } from '../adapter/catalog.ts'
 import { FREE_LANE_GATE_TOOL_NAMES, freeLaneGateTool } from '../adapter/messages.ts'
+import { authorizationFor, currentUpstreamKey } from '../adapter/credential.ts'
+import { noteLaneCap } from './lane-cap.ts'
 import { canonicalSessionID, disguiseHeaders, opencodeUserAgent, randomID, stableID } from '../adapter/ids.ts'
 import { gradeOf, type ExitNode, type ExitPool, type ExitProtocol, type ProbeFailure } from './pool.ts'
 import { exitProxyUri, httpsProxyOptions } from './dispatcher.ts'
@@ -349,7 +351,7 @@ export async function admitCandidate(
 
     // Step 3: HTTPS tunnel to the real upstream (models list, Bearer public).
     const models = await request(`${zenBase.replace(/\/+$/, '')}/v1/models`, {
-      headers: { authorization: 'Bearer public', 'user-agent': opencodeUserAgent(), 'x-opencode-client': 'cli', accept: 'application/json', ...probeHeaders },
+      headers: { authorization: authorizationFor(currentUpstreamKey()), 'user-agent': opencodeUserAgent(), 'x-opencode-client': 'cli', accept: 'application/json', ...probeHeaders },
     })
     if (models.statusCode !== 200) {
       // facts ride along: steps 1+2 succeeded, so the exit IP and latency are
@@ -371,7 +373,7 @@ export async function admitCandidate(
     const smoke = await request(`${zenBase.replace(/\/+$/, '')}/v1/chat/completions`, {
       method: 'POST',
       headers: {
-        authorization: 'Bearer public',
+        authorization: authorizationFor(currentUpstreamKey()),
         'content-type': 'application/json',
         ...disguiseHeaders({
           session: canonicalSessionID('opencode2dsh:admission-smoke'),
@@ -397,6 +399,7 @@ export async function admitCandidate(
       // and the periodic probe retries later (measured 2026-09-05: 429 is
       // the single largest smoke failure among tunnel-OK survivors).
       if (smoke.statusCode === 429) {
+        noteLaneCap(Number(smoke.headers?.['retry-after'] ?? 0))
         return {
           admitted: true,
           limited: true,

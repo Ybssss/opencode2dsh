@@ -6,6 +6,7 @@ import { writeFile } from 'node:fs/promises'
 import { ModelCatalog, defaultCachePath, normalizeAllowedModels, type CatalogSnapshot } from './adapter/catalog.ts'
 import { OpencodeDelegate, type DelegationDelegate } from './adapter/delegate.ts'
 import { ZenAdapter, PROVIDER_ID } from './adapter/zen-adapter.ts'
+import { resolveUpstreamKey, setUpstreamKey } from './adapter/credential.ts'
 import { AgentProcess, type ReadyInfo } from './agent-process.ts'
 import { Config, configPaths, ensureToken, ordinaryConfig, resolveConfig, writeAgentConfig, type DelegationConfig, type Opencode2dshConfig, type ResolvedPluginConfig } from './config.ts'
 import { applyIpPoolSettings } from './ip-pool-settings/apply.ts'
@@ -167,8 +168,10 @@ function applyAdapter(
     bodyIdleMs: cfg.bodyIdleMs,
     responsesBodyIdleMs: cfg.responsesBodyIdleMs,
     delegate,
+    authKey: resolveUpstreamKey(cfg),
     bunTransport: cfg.bunTransport?.enabled ? { ...cfg.bunTransport, isPoolEnabled: () => readIpPool()?.enabled === true } : undefined,
   })
+  setUpstreamKey(resolveUpstreamKey(cfg))
 
   // Register FIRST: the provider must appear in the selector right away. The
   // host awaits listModels and caches its answer per host generation, so the
